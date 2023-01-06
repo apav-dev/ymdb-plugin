@@ -19,8 +19,6 @@ export const getMovie = async (id: string) => {
   if (response) {
     const movie = await response.json();
 
-    console.log(movie);
-
     return `${movie.title.title}|${movie.title.image.url}|${movie.genres}|${
       movie.plotOutline ? movie.plotOutline.text : ""
     }|${movie.plotSummary ? movie.plotSummary.text : ""}`;
