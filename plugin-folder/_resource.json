@@ -1,0 +1,7 @@
+{
+  "$id": "ymdb-plugin",
+  "$schema": "https://schema.yext.com/config/platform/plugin/v1",
+  "globals": {
+    "RAPID_API_KEY": "${{RAPID_API_KEY}}"
+  }
+}
