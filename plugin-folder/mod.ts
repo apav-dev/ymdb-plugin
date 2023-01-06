@@ -21,11 +21,8 @@ export const getMovie = async (id: string) => {
 
     console.log(movie);
 
-    return `
-    ${movie.title.title}|
-    ${movie.title.image.url}|
-    ${movie.genres}|
-    ${movie.plotOutline ? movie.plotOutline.text : ""}|
-    ${movie.plotSummary ? movie.plotSummary.text : ""}`;
+    return `${movie.title.title}|${movie.title.image.url}|${movie.genres}|${
+      movie.plotOutline ? movie.plotOutline.text : ""
+    }|${movie.plotSummary ? movie.plotSummary.text : ""}`;
   }
 };

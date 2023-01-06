@@ -10,12 +10,22 @@ const envVars = config();
 
 globalThis.RAPID_API_KEY = envVars.RAPID_API_KEY;
 
-const testData = "";
-
-// write a deno test that checks if getMovie returns test data when passed the id tt11564570
-
 Deno.test("test getMovie", async () => {
-  const movie = await getMovie("tt11564570");
+  const movieDetailsString = await getMovie("tt11564570");
+  const movieDetailsArray = movieDetailsString?.split("|");
 
-  assertEquals(movie, testData);
+  assertEquals(movieDetailsArray?.[0], "Glass Onion: A Knives Out Mystery");
+  assertEquals(
+    movieDetailsArray?.[1],
+    "https://m.media-amazon.com/images/M/MV5BYmZlZDZkZjYtNzE5Mi00ODFhLTk2OTgtZWVmODBiZTI4NGFiXkEyXkFqcGdeQXVyMTE5MTg5NDIw._V1_.jpg"
+  );
+  assertEquals(movieDetailsArray?.[2], "Comedy,Crime,Drama,Mystery,Thriller");
+  assertEquals(
+    movieDetailsArray?.[3],
+    "Famed Southern detective Benoit Blanc travels to Greece for his latest case."
+  );
+  assertEquals(
+    movieDetailsArray?.[4],
+    "Five long-time friends are invited to the Greek island home of billionaire Miles Bron. All five know Bron from way back and owe their current wealth, fame and careers to him. The main event is a murder weekend game with Bron to be the victim. In reality, they all have reasons to kill him. Also invited is Benoit Blanc, the world's greatest detective."
+  );
 });
