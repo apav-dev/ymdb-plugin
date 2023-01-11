@@ -1,29 +1,6 @@
-declare const RAPID_API_KEY: string;
+import { ActorDetails, WebhookPayload } from "./types.ts";
 
-// write a function that takes a movie id as a parameter and returns the movie object
-
-export const getMovie = async (id: string) => {
-  const response = await fetch(
-    "https://online-movie-database.p.rapidapi.com/title/get-overview-details?limit=10&currentCountry=US&tconst=" +
-      id,
-    {
-      headers: {
-        "x-rapidapi-host": "online-movie-database.p.rapidapi.com",
-        "x-rapidapi-key": RAPID_API_KEY,
-      },
-    }
-  ).catch((err) => {
-    console.log(err.message);
-  });
-
-  if (response) {
-    const movie = await response.json();
-
-    return `${movie.title.title}|${movie.title.image.url}|${movie.genres}|${
-      movie.plotOutline ? movie.plotOutline.text : ""
-    }|${movie.plotSummary ? movie.plotSummary.text : ""}`;
-  }
-};
+declare const MOVIE_DB_API_KEY: string;
 
 const genres: Record<string, string> = {
   "28": "Action",
@@ -51,4 +28,79 @@ export const getGenres = (genreIdStr: string) => {
   const genreIds = genreIdStr.split(",");
   const genreNames = genreIds.map((id) => genres[id]);
   return genreNames.join(", ");
+};
+
+export const getActorsForMovieId = async (id: string) => {
+  let actorDetailsStr = "";
+
+  const response = await fetch(
+    `https://api.themoviedb.org/3/movie/${id}/credits?api_key=${MOVIE_DB_API_KEY}&language=en-US`
+  ).catch((err) => {
+    console.log(err.message);
+  });
+
+  if (response) {
+    const actorsResp = await response.json();
+    const actorsIds = actorsResp.cast.slice(0, 3) as { id: string }[];
+
+    const actorPromises = actorsIds.map((actorId) => {
+      return getActorDetails(actorId.id);
+    });
+
+    const actors = await Promise.allSettled(actorPromises);
+    actors.forEach((actor, i) => {
+      if (actor.status === "fulfilled") {
+        const details = actor.value;
+        console.log(details);
+        actorDetailsStr += `${details.id}|${details.name}|${
+          details.biography
+        }|${details.birthday ? details.birthday : ""}|${
+          details.place_of_birth ? details.place_of_birth : ""
+        }|https://image.tmdb.org/t/p/original/${details.profile_path}`;
+        if (i < actors.length - 1) actorDetailsStr += "!!";
+      } else {
+        console.log(`Couldn't get actor details: ${actor.reason}`);
+      }
+    });
+  }
+
+  return actorDetailsStr;
+};
+
+const getActorDetails = async (id: string): Promise<ActorDetails> => {
+  const detailsResp = await fetch(
+    `https://api.themoviedb.org/3/person/${id}?api_key=${MOVIE_DB_API_KEY}&language=en-US`
+  ).catch((err) => {
+    console.log(err.message);
+    throw err;
+  });
+
+  return detailsResp.json();
+};
+
+await getActorsForMovieId("76600");
+
+export const handleWebhook = async (event: WebhookPayload) => {
+  const { entityId, meta, changedFields, primaryProfile } = event;
+
+  await fetch(
+    `https://hooks.slack.com/services/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`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        text: `Entity ${entityId} was ${
+          meta.eventType === "ENTITY_CREATED" ? "created" : "updated"
+        }. Changed fields: ${changedFields.fieldNames.join(
+          ", "
+        )} See details here: https://sandbox.yext.com/s/3191694/entity/edit3?entityIds=${
+          primaryProfile.meta.uid
+        }`,
+      }),
+    }
+  ).catch((err) => {
+    console.log(err.message);
+  });
 };
